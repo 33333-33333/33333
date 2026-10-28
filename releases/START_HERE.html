@@ -6,8 +6,9 @@
 <h1>共有サーバーを起動する</h1>
 <p class="notice"><strong>フォルダをWebサーバーへ置くだけでは、オンライン対戦は動きません。</strong><br>全プレイヤーのワールドを動かすNode.jsプロセスを1つ常駐させ、そのプロセスへHTTPとWebSocketを転送してください。</p>
 <p>この手順は <code>https://2012r2.nishi.boats/~333/japan/</code> で公開する場合の例です。すでに使っているWebサーバーに合わせて設定します。既存データがある場合は更新前にバックアップし、以前のプロセスを止めてから更新してください。</p>
-<h2>1. Node.jsを確認する</h2>
-<p>SSHでZIPを展開した <code>rakugaki-multiplayer</code> フォルダへ移動し、以下を実行します。Node.js 22以降が必要です。サーバー本体とデータは、直接ファイルを配信する公開フォルダの外に置くことを勧めます。</p>
+<h2>1. 既存のNode.jsを使う</h2>
+<p><strong>v18.20.8のままで動作検証しています。サーバー全体のNode.jsを更新したり、sudoでインストールする必要はありません。</strong>アプリの起動に必要なのは、自分のフォルダへの書き込みと、自分のNode.jsプロセスを動かす権限です。</p>
+<p>SSHでZIPを展開した <code>rakugaki-multiplayer</code> フォルダへ移動し、以下を実行します。Node.js 18.20.8以降が必要です。サーバー本体とデータは、直接ファイルを配信する公開フォルダの外に置くことを勧めます。</p>
 <pre>node --version
 npm ci --ignore-scripts
 npm test</pre>
@@ -25,7 +26,8 @@ $env:DATA_DIR="$env:USERPROFILE\rakugaki-data"
 $env:COOKIE_SECURE="1"
 npm start</pre>
 <p>PM2などを使用する場合も<strong>インスタンス数は1</strong>にします。異なるコンテナやホストへ複製して負荷分散する構成には対応していません。データフォルダには実行中のロック <code>server.lock</code> が作られます。異常終了後にロックが残った場合は、古いプロセスが本当に停止していることを確認してから、そのロックだけを削除してください。</p>
-<h2>3. 公開URLをNode.jsへ転送する</h2>
+<h2>3. 公開URLへの転送は、権限を確認する</h2>
+<p class="notice">以下はサーバー管理者向けの設定例です。他人のサーバーで権限が分からない場合は、設定ファイルの変更や再読み込みを実行しないでください。Node.jsを起動できることと、この設定を変更できることは別です。</p>
 <p>SSHでNode.jsを起動できても、公開URLは自動でNode.jsへ切り替わりません。既存Webサーバーの管理権限がない場合は、ホスティング管理者に「<code>/~333/japan/</code> 全体を <code>127.0.0.1:3000</code> へHTTPとWebSocket込みでリバースプロキシしたい」と依頼してください。</p>
 <p>Nginxの場合は、既存のHTTPS用serverブロック内に次の設定を追加します。既存設定全体を置き換えるものではありません。設定検査後に再読み込みしてください。</p>
 <pre>location = /~333/japan {
@@ -47,10 +49,20 @@ ProxyPassReverse "/~333/japan/ws" "ws://127.0.0.1:3000/~333/japan/ws"
 ProxyPass        "/~333/japan/" "http://127.0.0.1:3000/~333/japan/"
 ProxyPassReverse "/~333/japan/" "http://127.0.0.1:3000/~333/japan/"</pre>
 <p>別のWebサーバーでも必要な条件は同じです。APIだけでなくWebSocketも転送し、外側のHostヘッダーを維持します。前段がパスを取り除く構成でも、保持する構成でも、この修正版は対応します。</p>
+<h2>設定権限が分からない場合</h2>
+<p>先に、自分のNode.jsプロセスだけを起動し、SSHの別ターミナルで次を実行してください。サーバー全体の設定は変更しません。ポート番号はホストで許可された番号を使ってください。</p>
+<pre>curl http://127.0.0.1:3000/~333/japan/api/health</pre>
+<p><code>mode: "multiplayer"</code> と <code>worldId</code> を含むJSONが返れば、自分の共有サーバーは動いています。その後、管理者に次の内容を確認してください。</p>
+<pre>自分のNode.jsアプリを1プロセス常駐させたいです。
+/~333/japan/ から 127.0.0.1:3000 へ、HTTPとWebSocketを転送できますか？
+利用可能なポート番号や、ユーザー用の転送設定方法があれば教えてください。
+サーバー全体のNode.jsの更新は不要です。</pre>
+<p>転送が許可されない場合は、その公開URLでこの共有サーバーへ接続することはできません。HTMLの配置だけで代用せず、利用可能な常駐実行・転送方法を管理者に確認してください。</p>
 <h2>4. 公開先で共有接続を確認する</h2>
-<p>公開URLと同じ場所にある <code>api/health</code> がHTMLではなくJSONを返し、<code>mode: "multiplayer"</code>、<code>worldId</code>、<code>build: "2026-10-28-shared-1"</code> を含むことを確認します。この手順書を公開URLから開いている場合は、次のボタンで確認できます。</p>
+<p>公開URLと同じ場所にある <code>api/health</code> がHTMLではなくJSONを返し、<code>mode: "multiplayer"</code>、<code>worldId</code>、<code>build: "2026-10-28-node18-1"</code> を含むことを確認します。この手順書を公開URLから開いている場合は、次のボタンで確認できます。</p>
 <button id="check" type="button">共有サーバーへのHTTP接続を確認</button><pre id="check-result">未確認</pre>
 <p>ゲームを強制再読み込みし、2つのタブで開いてください。左上の「共有ワールド」に同じIDが表示され、一方で出撃した絵がもう一方にも見えれば共有されています。HTTP確認が成功してもゲームが接続エラーの場合は、WebSocketの転送設定とサーバーログを確認してください。</p>
 <p class="notice">この修正版は通常のURLでは単独ワールドを起動しません。接続できない場合はエラー表示で停止します。意図して単独プレイを使う場合だけ、URLに <code>?mode=solo</code> を付けてください。</p>
 <script>document.getElementById('check').onclick=async()=>{const out=document.getElementById('check-result');try{if(location.protocol==='file:')throw Error('公開URLからこの手順書を開くか、SSHでapi/healthを確認してください。');const r=await fetch(new URL('api/health',location.href),{cache:'no-store'});if(!r.ok||!r.headers.get('content-type')?.includes('application/json'))throw Error('共有サーバーのJSON応答がありません。Node.jsの起動と転送設定を確認してください。');const data=await r.json();if(data.mode!=='multiplayer'||!data.worldId)throw Error('この修正版の共有サーバーではありません。サーバー本体も更新・再起動してください。');out.textContent=JSON.stringify(data,null,2)}catch(e){out.textContent=e.message}};</script>
+<p>Node18との互換性確認は、Node18本体の保守期限を延長するものではありません。ホストの管理者の運用方針に従ってください。</p>
 </body></html>
