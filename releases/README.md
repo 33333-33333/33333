@@ -1,6 +1,16 @@
+ヘッダー表示の修正版
+
+[差し替え用ZIP（index.htmlのみ）](https://github.com/33333-33333/33333/raw/refs/heads/master/releases/rakugaki-header-update.zip)
+
+「×1はリアルタイム進行」を削除し、ヘッダー左に「333の部屋に戻る」ボタンを追加しました。リンク先は https://2012r2.nishi.boats/~333/ です。PC・スマホの6種類の画面幅で位置とリンクを確認しています。
+
+今回はZIP内のindex.htmlだけを既存ファイルに差し替え、ブラウザを強制再読み込みしてください。Nodeの再起動やデータの変更は不要です。[変更詳細](HEADER_UPDATE.md)
+
+---
+
 Node.js 18.20.8互換版：システム更新不要
 
-[最新版ZIPをダウンロード](https://github.com/33333-33333/33333/raw/refs/heads/master/releases/rakugaki-node18-compatible.zip)
+[最新版ZIPをダウンロード](https://github.com/33333-33333/33333/raw/refs/heads/master/releases/rakugaki-header-full.zip)
 
 **フォルダをWebサーバーへ置くだけではマルチプレイは動きません。** 既存のNode.js v18.20.8でserver.cjsを1プロセス常駐させ、公開URLからHTTPとWebSocketを転送してください。導入手順はZIP内の **START_HERE.html** をブラウザで開いて読めます。
 
